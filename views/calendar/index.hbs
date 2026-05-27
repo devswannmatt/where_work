@@ -1,0 +1,38 @@
+<section class="page-head split calendar-toolbar">
+  <h1>Calendar Scheduler</h1>
+  <div class="inline-actions">
+    <a class="button button-secondary" href="/calendar?{{previousQuery}}">Previous</a>
+    <a class="button button-secondary {{#if (eq mode 'week')}}calendar-mode-active{{/if}}" href="/calendar?mode=week&date={{currentDateKey}}">Week</a>
+    <a class="button button-secondary {{#if (eq mode 'month')}}calendar-mode-active{{/if}}" href="/calendar?mode=month&date={{currentDateKey}}">Month</a>
+    <a class="button button-secondary" href="/calendar?{{nextQuery}}">Next</a>
+  </div>
+</section>
+
+<section class="calendar-grid" data-mode="{{mode}}">
+  {{#each days}}
+    <article class="calendar-day" data-date="{{this.key}}">
+      <h3 class="calendar-day-title">
+        <span>{{this.label}}</span>
+        <span class="calendar-day-count">{{this.events.length}}</span>
+      </h3>
+      <div class="calendar-dropzone" data-date="{{this.key}}">
+        {{#each this.events}}
+          <div class="calendar-event {{#if (eq this.status 'Completed')}}calendar-event-complete{{else}}calendar-event-open{{/if}}" draggable="true" data-job-id="{{this.jobId}}" data-workday-id="{{this.workDayId}}">
+            <span class="calendar-event-status-icon" title="{{this.status}}">
+              {{#if (eq this.status 'Completed')}}
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+              {{else}}
+                <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
+              {{/if}}
+            </span>
+
+            <p class="calendar-event-title"><strong>{{firstLineAddress this.address}}</strong></p>
+            <p class="calendar-event-meta"><small>Workers: {{this.workers}} / {{this.hours}}hrs</small></p>
+          </div>
+        {{/each}}
+      </div>
+    </article>
+  {{/each}}
+</section>
+
+<script src="/js/calendar-dnd.js"></script>

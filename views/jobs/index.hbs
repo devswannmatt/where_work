@@ -1,0 +1,50 @@
+<section class="page-head split">
+  <h1>Construction Jobs</h1>
+  <a class="button" href="/jobs/new">Add Job</a>
+</section>
+
+{{#if alerts.length}}
+  <section class="card alert-stack">
+    <h2>Reminders</h2>
+    <ul>
+      {{#each alerts}}
+        <li>
+          {{this.message}}
+          <a href="/jobs/{{this.jobId}}">View Job</a>
+        </li>
+      {{/each}}
+    </ul>
+  </section>
+{{/if}}
+
+{{#if jobs.length}}
+  <div class="job-list jobs-page-wide">
+    {{#each jobs}}
+      <article class="card job-list-card">
+        <h2>{{this.address}}</h2>
+
+        <div class="job-meta-grid">
+          <p>
+            <strong>Status:</strong>
+            <span class="status-pill {{statusClass this.status}}">{{this.status}}</span>
+          </p>
+          <p>
+            <strong>Expected Dates:</strong>
+            {{formatDateUK this.plannedStartDate}} to {{formatDateUK this.plannedFinishDate}}
+          </p>
+          <p><strong>Workers:</strong> {{joinWorkerNames this.workers}}</p>
+        </div>
+
+        <div class="actions">
+          <a class="button button-secondary" href="/jobs/{{this._id}}">Details</a>
+          <a class="button button-secondary" href="/jobs/{{this._id}}/edit">Edit</a>
+          <form action="/jobs/{{this._id}}?_method=DELETE" method="POST">
+            <button class="button button-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </article>
+    {{/each}}
+  </div>
+{{else}}
+  <p>No jobs have been added yet.</p>
+{{/if}}

@@ -1,0 +1,65 @@
+<section class="page-head split">
+  <h1>Workers</h1>
+</section>
+
+<article class="card">
+  <h2>Add Worker</h2>
+
+  {{#if errors.length}}
+    <div class="alert alert-error">
+      <ul>
+        {{#each errors}}
+          <li>{{this.msg}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  {{/if}}
+
+  <form action="/workers" method="POST" class="form-grid">
+    <label>
+      Full Name
+      <input type="text" name="fullName" value="{{form.fullName}}" required />
+    </label>
+    <label>
+      Role
+      <input type="text" name="role" value="{{form.role}}" />
+    </label>
+    <label>
+      Phone
+      <input type="text" name="phone" value="{{form.phone}}" />
+    </label>
+    <button class="button" type="submit">Add Worker</button>
+  </form>
+</article>
+
+<article class="card">
+  <h2>Worker List</h2>
+  {{#if workers.length}}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Phone</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each workers}}
+          <tr>
+            <td>{{this.fullName}}</td>
+            <td>{{this.role}}</td>
+            <td>{{this.phone}}</td>
+            <td>
+              <form action="/workers/{{this._id}}?_method=DELETE" method="POST">
+                <button class="button button-danger" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <p>No workers added yet.</p>
+  {{/if}}
+</article>

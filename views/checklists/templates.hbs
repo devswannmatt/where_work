@@ -1,0 +1,52 @@
+<section class="page-head split">
+  <h1>Checklist Templates</h1>
+</section>
+
+<article class="card">
+  <h2>Add Checklist Template</h2>
+
+  {{#if errors.length}}
+    <div class="alert alert-error">
+      <ul>
+        {{#each errors}}
+          <li>{{this.msg}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  {{/if}}
+
+  <form action="/checklists/templates" method="POST" class="form-grid">
+    <label>
+      Template Name
+      <input type="text" name="name" value="{{form.name}}" required />
+    </label>
+
+    <label class="full-width">
+      Items (one per line)
+      <textarea name="itemsInput" rows="5" placeholder="PPE checked&#10;Permit confirmed&#10;Client walkthrough">{{form.itemsInput}}</textarea>
+    </label>
+
+    <button class="button" type="submit">Save Template</button>
+  </form>
+</article>
+
+<article class="card">
+  <h2>Templates</h2>
+  {{#if templates.length}}
+    {{#each templates}}
+      <section class="template-card">
+        <h3>{{this.name}}</h3>
+        <ul>
+          {{#each this.items}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+        <form action="/checklists/templates/{{this._id}}?_method=DELETE" method="POST">
+          <button class="button button-danger" type="submit">Delete</button>
+        </form>
+      </section>
+    {{/each}}
+  {{else}}
+    <p>No checklist templates yet.</p>
+  {{/if}}
+</article>

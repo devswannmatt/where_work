@@ -1,0 +1,15 @@
+<section class="page-head">
+  <h1>Add Construction Job</h1>
+</section>
+
+<form action="/jobs" method="POST" enctype="multipart/form-data" class="card">
+  {{> job-form}}
+  <button class="button" type="submit">Save Job</button>
+</form>
+
+<script src="/js/job-map.js"></script>
+<script src="/js/work-days.js"></script>
+<script src="/js/photo-gallery-temp.js"></script>
+{{#if googleMapsApiKey}}
+  <script src="https://maps.googleapis.com/maps/api/js?key={{googleMapsApiKey}}&callback=initJobMap" async defer></script>
+{{/if}}

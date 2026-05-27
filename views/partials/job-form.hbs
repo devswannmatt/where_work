@@ -1,0 +1,304 @@
+{{#if successMessage}}
+  <div class="alert alert-success">
+    {{successMessage}}
+  </div>
+{{/if}}
+
+{{#if errors.length}}
+  <div class="alert alert-error">
+    <strong>Please fix the following:</strong>
+    <ul>
+      {{#each errors}}
+        <li>{{this.msg}}</li>
+      {{/each}}
+    </ul>
+  </div>
+{{/if}}
+
+<div class="form-grid">
+  <section class="full-width work-brief-section">
+    <h3>
+      Job Details
+      {{#if (sectionIsEmpty 'job-details' form job)}}
+        <span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+      {{/if}}
+    </h3>
+    <label>
+      Job Details
+      <textarea name="workBrief" rows="5" placeholder="Describe completed works...">{{form.workBrief}}</textarea>
+    </label>
+
+    <label class="currency-label">
+      Contract Value
+      <input type="number" min="0" step="0.01" name="contractValue" value="{{form.contractValue}}" />
+    </label>
+
+    <div class="signoff-row">
+      <label>
+        Planned Start Date
+        <input type="date" name="plannedStartDate" value="{{toDateInput form.plannedStartDate}}" />
+      </label>
+
+      <label>
+        Planned Finish Date
+        <input type="date" name="plannedFinishDate" value="{{toDateInput form.plannedFinishDate}}" />
+      </label>
+    </div>
+  </section>
+
+  <details class="full-width collapsible-card" id="location-panel">
+    <summary><span class="section-summary-title">Location - {{form.address}} {{#if (sectionIsEmpty 'location' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="location-section">
+      <div class="location-grid">
+        <label class="full-width">
+          Map Search
+          <input id="address-input" type="text" name="address" value="{{form.address}}" required />
+        </label>
+
+        <section class="map-section full-width" data-lat="{{form.lat}}" data-lng="{{form.lng}}">
+          <h3>Map</h3>
+          <p>Select an address or click on the map to set latitude/longitude.</p>
+          <div id="map"></div>
+        </section>
+
+        <label>
+          Latitude
+          <input id="lat-input" type="number" step="any" name="lat" value="{{form.lat}}" />
+        </label>
+
+        <label>
+          Longitude
+          <input id="lng-input" type="number" step="any" name="lng" value="{{form.lng}}" />
+        </label>
+      </div>
+    </section>
+  </details>
+
+  <details class="full-width collapsible-card" id="materials-panel">
+    <summary><span class="section-summary-title">Materials {{#if (sectionIsEmpty 'materials' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="template-section">
+      <div class="split-row">
+        <h3>Material Catalog</h3>
+        <div class="inline-actions">
+          <select id="material-template-picker">
+            <option value="">Choose template</option>
+            {{#each materialTemplates}}
+              <option value="{{this.name}}|1|{{this.unit}}|{{this.defaultRate}}">{{this.name}} ({{this.unit}} @ {{this.defaultRate}})</option>
+            {{/each}}
+          </select>
+          <button id="add-material-used" class="button button-secondary" type="button">+ Used</button>
+          <button id="add-material-left" class="button button-secondary" type="button">+ Left</button>
+        </div>
+      </div>
+
+      <label>
+        Materials Used (one per line: name|quantity|unit|rate)
+        <textarea id="materials-used-input" name="materialsUsedInput" rows="4" placeholder="Concrete|3|bags|7.50">{{form.materialsUsedInput}}</textarea>
+      </label>
+
+      <label>
+        Materials Left On Site (one per line: name|quantity|unit|rate)
+        <textarea id="materials-left-input" name="materialsLeftInput" rows="4" placeholder="Rebar|8|pieces|2.10">{{form.materialsLeftInput}}</textarea>
+      </label>
+    </section>
+  </details>
+
+  <details class="full-width collapsible-card" id="work-days-panel">
+    <summary><span class="section-summary-title">Work Days - {{workDaysSummary form.workDays}} {{#if (sectionIsEmpty 'work-days' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="work-days-section">
+      <div class="split-row">
+        <h3>Work Days</h3>
+        <button id="add-work-day" class="button button-secondary" type="button">Add Work Day</button>
+      </div>
+
+      <div id="work-day-rows">
+        {{#each form.workDays}}
+          <div class="work-day-row">
+            <input type="hidden" name="workDayId" value="{{this._id}}" />
+
+            <label>
+              Date
+              <input type="date" name="workDayDate" value="{{toDateInput this.date}}" />
+            </label>
+
+            <label>
+              Hours
+              <input type="number" min="0" max="24" step="0.25" name="workDayHours" value="{{this.hours}}" />
+            </label>
+
+            <label class="currency-label">
+              Labor Cost
+              <input type="number" min="0" step="0.01" name="workDayLaborCost" value="{{this.laborCost}}" />
+            </label>
+
+            <label class="currency-label">
+              Material Cost
+              <input type="number" min="0" step="0.01" name="workDayMaterialCost" value="{{this.materialCost}}" />
+            </label>
+
+            <label class="work-day-note">
+              Note
+              <input type="text" name="workDayNote" value="{{this.note}}" placeholder="Day summary or notes" />
+            </label>
+
+            <button class="button button-danger remove-work-day" type="button">Remove</button>
+          </div>
+        {{/each}}
+      </div>
+    </section>
+  </details>
+
+  <details class="full-width collapsible-card" id="checklist-panel">
+    <summary><span class="section-summary-title">Site Checklist {{#if (sectionIsEmpty 'checklist' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="checklist-section">
+      <div class="split-row">
+        <h3>Site Checklist</h3>
+        <div class="inline-actions">
+          <select id="checklist-template-picker" name="checklistTemplateName">
+            <option value="">No Template</option>
+            {{#each checklistTemplates}}
+              <option value="{{this.name}}" {{#if (eq ../form.checklistTemplateName this.name)}}selected{{/if}}>{{this.name}}</option>
+            {{/each}}
+          </select>
+          <button id="apply-checklist-template" class="button button-secondary" type="button">Apply Template</button>
+          <button id="add-checklist-row" class="button button-secondary" type="button">Add Item</button>
+        </div>
+      </div>
+
+      <div id="checklist-rows">
+        {{#each form.checklistItems}}
+          <article class="checklist-row">
+            <label class="checklist-label">
+              Item
+              <input type="text" name="checklistLabel" value="{{this.label}}" />
+            </label>
+
+            <div class="checklist-row-actions">
+              <label class="checklist-toggle">
+                <input class="checklist-complete-toggle" type="checkbox" {{#if this.completed}}checked{{/if}} />
+                <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Done</span>
+              </label>
+              <input type="hidden" name="checklistState" value="{{#if this.completed}}1{{else}}0{{/if}}" />
+
+              <button class="button button-danger icon-button remove-checklist-row" type="button" aria-label="Remove checklist item" title="Remove checklist item"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+            </div>
+          </article>
+        {{/each}}
+      </div>
+    </section>
+  </details>
+
+  <details class="full-width collapsible-card" id="workers-panel">
+    <summary><span class="section-summary-title">Assigned Workers - {{selectedCount form.workers}} {{#if (sectionIsEmpty 'workers' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="assign-workers-section">
+      <p class="muted-text">Choose one or more workers for this job.</p>
+
+      <div class="worker-picker-grid">
+        {{#each workers}}
+          <label class="worker-picker-card">
+            <span class="worker-picker-main">
+              <input type="checkbox" name="workers" value="{{this._id}}" {{#if (contains ../form.workers this._id)}}checked{{/if}} />
+              <span>
+                <strong>{{this.fullName}}</strong>
+                {{#if this.role}}
+                  <span class="worker-picker-role">{{this.role}}</span>
+                {{/if}}
+              </span>
+            </span>
+
+            {{#if this.phone}}
+              <span class="worker-picker-phone"><i class="fa-solid fa-phone" aria-hidden="true"></i> {{this.phone}}</span>
+            {{/if}}
+          </label>
+        {{/each}}
+      </div>
+    </section>
+  </details>
+
+  <details class="full-width collapsible-card" id="photos-panel">
+    <summary><span class="section-summary-title">Images - {{imageCount job}} {{#if (sectionIsEmpty 'photos' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="photos-upload-section">
+      <h3>
+        Images
+        {{#if (sectionIsEmpty 'photos' form job)}}
+          <span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>
+        {{/if}}
+      </h3>
+
+      <label>
+        Upload Site Photos
+        <input id="photos-input" type="file" name="photos" accept="image/*" multiple />
+      </label>
+      <p class="muted-text">Selected photos appear below immediately. Add a note to each before saving.</p>
+      <div id="photo-preview-gallery" class="photo-preview-grid" aria-live="polite"></div>
+
+      {{#if job.photos.length}}
+        <h4>Existing Images</h4>
+        <div class="photo-edit-grid">
+          {{#each job.photos}}
+            <article class="photo-edit-card">
+              <input type="hidden" name="existingPhotoUrl" value="{{this.url}}" />
+              <img src="{{this.url}}" alt="Site photo" />
+
+              <label>
+                Note
+                <input type="text" name="existingPhotoNote" value="{{this.note}}" maxlength="280" placeholder="Add a note for this photo" />
+              </label>
+
+              <label>
+                Date
+                <input type="date" name="existingPhotoDate" value="{{toDateInput this.uploadedAt}}" />
+              </label>
+
+              <label class="photo-remove-toggle">
+                <input type="checkbox" name="removePhotoUrls" value="{{this.url}}" />
+                Remove this photo
+              </label>
+            </article>
+          {{/each}}
+        </div>
+      {{/if}}
+    </section>
+  </details>
+
+  <details class="full-width collapsible-card" id="signoff-panel">
+    <summary><span class="section-summary-title">Job Completion {{#if (sectionIsEmpty 'signoff' form job)}}<span class="section-warning" title="This section is empty"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span>{{/if}}</span> <span class="caret"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></summary>
+
+    <section class="signature-section">
+      <label>
+        Site Report
+        <textarea name="siteReport" rows="5" placeholder="Add completed work report, issues, and handover notes...">{{form.siteReport}}</textarea>
+      </label>
+
+      <div class="signoff-row">
+        <label>
+          Signed By
+          <input id="signoff-signed-by" type="text" name="signoffSignedBy" value="{{form.signoffSignedBy}}" placeholder="Client or site manager name" />
+        </label>
+
+        <label>
+          Completed Date
+          <input type="date" name="completedAt" value="{{toDateInput form.completedAt}}" />
+        </label>
+      </div>
+
+      <input type="hidden" id="signoff-data-url" name="signoffSignatureDataUrl" value="{{form.signoffSignatureDataUrl}}" />
+      <input type="hidden" id="clear-signature" name="clearSignature" value="0" />
+
+      <canvas id="signature-canvas" width="560" height="160"></canvas>
+      <div class="inline-actions">
+        <button id="clear-signature-button" class="button button-danger" type="button">Clear Signature</button>
+      </div>
+    </section>
+  </details>
+</div>
+
+<script>
+  window.checklistTemplateData = {{{json checklistTemplates}}};
+</script>

@@ -1,0 +1,65 @@
+<section class="page-head split">
+  <h1>Material Catalog</h1>
+</section>
+
+<article class="card">
+  <h2>Add Material Template</h2>
+
+  {{#if errors.length}}
+    <div class="alert alert-error">
+      <ul>
+        {{#each errors}}
+          <li>{{this.msg}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  {{/if}}
+
+  <form action="/materials" method="POST" class="form-grid">
+    <label>
+      Name
+      <input type="text" name="name" value="{{form.name}}" required />
+    </label>
+    <label>
+      Unit
+      <input type="text" name="unit" value="{{form.unit}}" />
+    </label>
+    <label class="currency-label">
+      Default Rate
+      <input type="number" min="0" step="0.01" name="defaultRate" value="{{form.defaultRate}}" />
+    </label>
+    <button class="button" type="submit">Save Template</button>
+  </form>
+</article>
+
+<article class="card">
+  <h2>Templates</h2>
+  {{#if templates.length}}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Unit</th>
+          <th>Rate</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each templates}}
+          <tr>
+            <td>{{this.name}}</td>
+            <td>{{this.unit}}</td>
+            <td>{{formatCurrency this.defaultRate}}</td>
+            <td>
+              <form action="/materials/{{this._id}}?_method=DELETE" method="POST">
+                <button class="button button-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  {{else}}
+    <p>No templates added yet.</p>
+  {{/if}}
+</article>

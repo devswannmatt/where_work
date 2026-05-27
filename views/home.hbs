@@ -1,0 +1,15 @@
+<section class="hero">
+  <h1>Construction Job Tracking</h1>
+  <p>
+    Capture completed work, upload site photos, track materials used and left on site,
+    and assign crew members for each job location.
+  </p>
+  <div class="hero-actions">
+    {{#if isAuthenticated}}
+      <a class="button" href="/jobs/new">Create Job</a>
+      <a class="button button-secondary" href="/jobs">View Jobs</a>
+    {{else}}
+      <a class="button" href="/login">Log In with Auth0</a>
+    {{/if}}
+  </div>
+</section>

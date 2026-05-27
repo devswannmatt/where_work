@@ -1,0 +1,48 @@
+<section class="page-head split">
+  <h1>User Roles</h1>
+  <a class="button button-secondary" href="/account">Back to Account</a>
+</section>
+
+{{#if updatedMessage}}
+  <section class="card success-banner">{{updatedMessage}}</section>
+{{/if}}
+
+{{#if errorMessage}}
+  <section class="card error-list">{{errorMessage}}</section>
+{{/if}}
+
+<section class="card">
+  <div class="table-wrap">
+    <table class="roles-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Admin</th>
+          <th>Supervisor</th>
+          <th>Save</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each users}}
+          <tr>
+            <td>{{this.name}}</td>
+            <td>{{this.email}}</td>
+            <td>
+              <input type="checkbox" form="user-role-{{@index}}" name="admin" value="true" {{#if this.isAdmin}}checked{{/if}} />
+            </td>
+            <td>
+              <input type="checkbox" form="user-role-{{@index}}" name="supervisor" value="true" {{#if this.isSupervisor}}checked{{/if}} />
+            </td>
+            <td>
+              <form id="user-role-{{@index}}" method="POST" action="/admin/users/role" class="inline-actions">
+                <input type="hidden" name="userId" value="{{this.user_id}}" />
+                <button type="submit" class="button">Save</button>
+              </form>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</section>

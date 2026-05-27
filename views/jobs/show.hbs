@@ -1,0 +1,169 @@
+<section class="page-head split">
+  <h1>Job Details</h1>
+  <a class="button button-secondary" href="/jobs/{{job._id}}/edit">Edit Job</a>
+</section>
+
+<article class="card job-details-page">
+  <header class="job-details-header">
+    <h2>{{job.address}}</h2>
+    <span class="status-pill {{statusClass status}}">{{status}}</span>
+  </header>
+
+  <section class="job-kpi-grid">
+    <article class="job-kpi-card">
+      <p class="job-kpi-label">Planned Start</p>
+      <p class="job-kpi-value">{{formatDateUK job.plannedStartDate}}</p>
+    </article>
+    <article class="job-kpi-card">
+      <p class="job-kpi-label">Planned Finish</p>
+      <p class="job-kpi-value">{{formatDateUK job.plannedFinishDate}}</p>
+    </article>
+    <article class="job-kpi-card">
+      <p class="job-kpi-label">Completed</p>
+      <p class="job-kpi-value">{{formatDateUK job.completedAt}}</p>
+    </article>
+    <article class="job-kpi-card job-kpi-wide">
+      <p class="job-kpi-label">Assigned Workers</p>
+      <p class="job-kpi-value">{{joinWorkerNames job.workers}}</p>
+    </article>
+  </section>
+
+  <section class="job-content-grid">
+    <section class="job-section">
+      <h3>Costs and Margin</h3>
+      <ul class="detail-list">
+        <li>Contract Value: <strong>{{formatCurrency costSummary.contractValue}}</strong></li>
+        <li>Total Hours: <strong>{{costSummary.totalHours}}</strong></li>
+        <li>Labor Cost: <strong>{{formatCurrency costSummary.laborCost}}</strong></li>
+        <li>Material Cost: <strong>{{formatCurrency costSummary.materialCost}}</strong></li>
+        <li>Total Cost: <strong>{{formatCurrency costSummary.totalCost}}</strong></li>
+        <li>Margin: <strong>{{formatCurrency costSummary.marginAmount}} ({{formatPercent costSummary.marginPercent}})</strong></li>
+      </ul>
+    </section>
+
+    <section class="job-section">
+      <h3>Work Brief</h3>
+      <p class="job-copy">{{job.workBrief}}</p>
+
+      <h3>Site Report</h3>
+      <p class="job-copy">{{job.siteReport}}</p>
+    </section>
+  </section>
+
+  <section class="job-content-grid">
+    <section class="job-section">
+      <h3>Materials Used</h3>
+      <ul class="detail-list">
+        {{#if job.materialsUsed.length}}
+          {{#each job.materialsUsed}}
+            <li>{{this.name}} - {{this.quantity}} {{this.unit}} @ {{formatCurrency this.rate}}</li>
+          {{/each}}
+        {{else}}
+          <li>No materials listed.</li>
+        {{/if}}
+      </ul>
+    </section>
+
+    <section class="job-section">
+      <h3>Materials Left On Site</h3>
+      <ul class="detail-list">
+        {{#if job.materialsLeftOnSite.length}}
+          {{#each job.materialsLeftOnSite}}
+            <li>{{this.name}} - {{this.quantity}} {{this.unit}} @ {{formatCurrency this.rate}}</li>
+          {{/each}}
+        {{else}}
+          <li>No leftover materials listed.</li>
+        {{/if}}
+      </ul>
+    </section>
+  </section>
+
+  <section class="job-content-grid">
+    <section class="job-section">
+      <h3>Work Days</h3>
+      {{#if job.workDays.length}}
+        <ul class="detail-list">
+          {{#each job.workDays}}
+            <li>{{formatDateUK this.date}} - {{this.hours}}h | Labor {{formatCurrency this.laborCost}} | Material {{formatCurrency this.materialCost}} {{#if this.note}}- {{this.note}}{{/if}}</li>
+          {{/each}}
+        </ul>
+      {{else}}
+        <p class="job-copy">No work days have been added yet.</p>
+      {{/if}}
+    </section>
+
+    <section class="job-section">
+      <h3>Checklist</h3>
+      {{#if job.checklistItems.length}}
+        <ul class="detail-list">
+          {{#each job.checklistItems}}
+            <li>{{this.label}} - {{#if this.completed}}Done{{else}}Pending{{/if}}</li>
+          {{/each}}
+        </ul>
+      {{else}}
+        <p class="job-copy">No checklist items added.</p>
+      {{/if}}
+    </section>
+  </section>
+
+  {{#if job.signoff.signatureDataUrl}}
+    <section class="job-section">
+      <h3>Signoff</h3>
+      <p class="job-copy"><strong>Signed By:</strong> {{job.signoff.signedBy}}</p>
+      <p class="job-copy"><strong>Signed At:</strong> {{formatDateTimeUK job.signoff.signedAt}}</p>
+      <img class="signature-image" src="{{job.signoff.signatureDataUrl}}" alt="Completion signature" />
+    </section>
+  {{/if}}
+
+  <section class="job-section">
+    <h3>Photos</h3>
+    {{#if job.photos.length}}
+      <div class="photo-grid">
+        {{#each job.photos}}
+          <figure class="photo-card">
+            <img src="{{this.url}}" alt="Site photo" />
+            <figcaption>
+              {{#if this.note}}
+                {{this.note}}<br />
+              {{/if}}
+              Date: {{formatDateUK this.uploadedAt}}
+            </figcaption>
+          </figure>
+        {{/each}}
+      </div>
+    {{else}}
+      <p class="job-copy">No photos uploaded yet.</p>
+    {{/if}}
+  </section>
+
+  <section class="job-content-grid">
+    <section class="job-section">
+      <h3>Timeline</h3>
+      <div class="timeline">
+        {{#if timelineEvents.length}}
+          {{#each timelineEvents}}
+            <article class="timeline-item">
+              <p><strong>{{formatDateUK this.date}}</strong> - {{this.title}}</p>
+              <p>{{this.detail}}</p>
+              {{#if this.note}}
+                <p>{{this.note}}</p>
+              {{/if}}
+            </article>
+          {{/each}}
+        {{else}}
+          <p class="job-copy">No timeline entries yet.</p>
+        {{/if}}
+      </div>
+    </section>
+
+    <section class="job-section map-section" data-lat="{{job.location.lat}}" data-lng="{{job.location.lng}}">
+      <h3>Site Map</h3>
+      <div id="map"></div>
+    </section>
+  </section>
+</article>
+
+<script src="/js/job-map.js"></script>
+{{#if googleMapsApiKey}}
+  <script src="https://maps.googleapis.com/maps/api/js?key={{googleMapsApiKey}}&callback=initJobMap" async defer></script>
+{{/if}}

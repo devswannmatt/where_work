@@ -1,0 +1,22 @@
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="brand" href="/">Where Work</a>
+    <nav>
+      {{#if isAuthenticated}}
+        <a href="/jobs">Jobs</a>
+        <a href="/calendar">Calendar</a>
+        <a href="/workers">Workers</a>
+        <a href="/materials">Materials</a>
+        <a href="/checklists/templates">Checklists</a>
+        <a href="/jobs/new" class="button-link">New Job</a>
+        {{#if isAdmin}}
+          <a href="/admin/users">User Roles</a>
+        {{/if}}
+        <a href="/account">Account</a>
+        <a href="/logout">Log Out</a>
+      {{else}}
+        <a href="/login" class="button-link">Log In</a>
+      {{/if}}
+    </nav>
+  </div>
+</header>

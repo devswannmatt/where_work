@@ -1,0 +1,25 @@
+<section class="page-head">
+  <h1>Account</h1>
+</section>
+
+<section class="card">
+  <p><strong>Name:</strong> {{user.name}}</p>
+  <p><strong>Email:</strong> {{user.email}}</p>
+  <p><strong>Nickname:</strong> {{user.nickname}}</p>
+  <p><strong>Auth0 User ID:</strong> {{user.sub}}</p>
+  <p><strong>Roles:</strong>
+    {{#if currentRoles.length}}
+      {{#each currentRoles}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+    {{else}}
+      None assigned
+    {{/if}}
+  </p>
+
+  <div class="inline-actions">
+    <a class="button button-secondary" href="/jobs">Back to Jobs</a>
+    {{#if isAdmin}}
+      <a class="button" href="/admin/users">Manage User Roles</a>
+    {{/if}}
+    <a class="button button-danger" href="/logout">Log Out</a>
+  </div>
+</section>
