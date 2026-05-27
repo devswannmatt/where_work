@@ -12,15 +12,15 @@
   <section class="job-kpi-grid">
     <article class="job-kpi-card">
       <p class="job-kpi-label">Planned Start</p>
-      <p class="job-kpi-value">{{formatDateUK job.plannedStartDate}}</p>
+      <p class="job-kpi-value">{{formatDateTimeUK job.plannedStartDate}}</p>
     </article>
     <article class="job-kpi-card">
       <p class="job-kpi-label">Planned Finish</p>
-      <p class="job-kpi-value">{{formatDateUK job.plannedFinishDate}}</p>
+      <p class="job-kpi-value">{{formatDateTimeUK job.plannedFinishDate}}</p>
     </article>
     <article class="job-kpi-card">
       <p class="job-kpi-label">Completed</p>
-      <p class="job-kpi-value">{{formatDateUK job.completedAt}}</p>
+      <p class="job-kpi-value">{{formatDateTimeUK job.completedAt}}</p>
     </article>
     <article class="job-kpi-card job-kpi-wide">
       <p class="job-kpi-label">Assigned Workers</p>
@@ -33,8 +33,9 @@
       <h3>Costs and Margin</h3>
       <ul class="detail-list">
         <li>Contract Value: <strong>{{formatCurrency costSummary.contractValue}}</strong></li>
+        <li>Contract Budget: <strong>{{formatCurrency costSummary.contractBudget}}</strong></li>
         <li>Total Hours: <strong>{{costSummary.totalHours}}</strong></li>
-        <li>Labor Cost: <strong>{{formatCurrency costSummary.laborCost}}</strong></li>
+        <li>Labour Cost: <strong>{{formatCurrency costSummary.laborCost}}</strong></li>
         <li>Material Cost: <strong>{{formatCurrency costSummary.materialCost}}</strong></li>
         <li>Total Cost: <strong>{{formatCurrency costSummary.totalCost}}</strong></li>
         <li>Margin: <strong>{{formatCurrency costSummary.marginAmount}} ({{formatPercent costSummary.marginPercent}})</strong></li>
@@ -84,7 +85,7 @@
       {{#if job.workDays.length}}
         <ul class="detail-list">
           {{#each job.workDays}}
-            <li>{{formatDateUK this.date}} - {{this.hours}}h | Labor {{formatCurrency this.laborCost}} | Material {{formatCurrency this.materialCost}} {{#if this.note}}- {{this.note}}{{/if}}</li>
+            <li>{{formatDateTimeUK this.date}} - {{this.hours}}h | Labour {{formatCurrency this.laborCost}} | Material {{formatCurrency this.materialCost}} {{#if this.note}}- {{this.note}}{{/if}}</li>
           {{/each}}
         </ul>
       {{else}}
@@ -126,7 +127,7 @@
               {{#if this.note}}
                 {{this.note}}<br />
               {{/if}}
-              Date: {{formatDateUK this.uploadedAt}}
+              Date: {{formatDateTimeUK this.uploadedAt}}
             </figcaption>
           </figure>
         {{/each}}
@@ -143,7 +144,7 @@
         {{#if timelineEvents.length}}
           {{#each timelineEvents}}
             <article class="timeline-item">
-              <p><strong>{{formatDateUK this.date}}</strong> - {{this.title}}</p>
+              <p><strong>{{formatDateTimeUK this.date}}</strong> - {{this.title}}</p>
               <p>{{this.detail}}</p>
               {{#if this.note}}
                 <p>{{this.note}}</p>

@@ -14,6 +14,8 @@
   const signatureDataInput = document.getElementById('signoff-data-url');
   const clearSignatureInput = document.getElementById('clear-signature');
   const clearSignatureButton = document.getElementById('clear-signature-button');
+  const canEditFinancials = window.jobFormCanEditFinancials !== false;
+  const financialReadOnlyAttribute = canEditFinancials ? '' : 'readonly';
 
   function createWorkDayRow() {
     const row = document.createElement('div');
@@ -22,8 +24,8 @@
       <input type="hidden" name="workDayId" value="" />
 
       <label>
-        Date
-        <input type="date" name="workDayDate" />
+        Date and Time
+        <input type="datetime-local" name="workDayDate" />
       </label>
 
       <label>
@@ -32,13 +34,13 @@
       </label>
 
       <label class="currency-label">
-        Labor Cost
-        <input type="number" min="0" step="0.01" name="workDayLaborCost" />
+        Labour Cost
+        <input type="number" min="0" step="0.01" name="workDayLaborCost" ${financialReadOnlyAttribute} />
       </label>
 
       <label class="currency-label">
         Material Cost
-        <input type="number" min="0" step="0.01" name="workDayMaterialCost" />
+        <input type="number" min="0" step="0.01" name="workDayMaterialCost" ${financialReadOnlyAttribute} />
       </label>
 
       <label class="work-day-note">

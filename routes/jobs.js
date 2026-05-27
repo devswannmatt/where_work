@@ -9,6 +9,7 @@ const router = express.Router();
 const jobValidation = [
   body('address').trim().notEmpty().withMessage('Address is required.'),
   body('contractValue').optional({ values: 'falsy' }).isFloat({ min: 0 }).withMessage('Contract value must be 0 or more.'),
+  body('contractBudget').optional({ values: 'falsy' }).isFloat({ min: 0 }).withMessage('Contract budget must be 0 or more.'),
   body('lat')
     .optional({ values: 'falsy' })
     .isFloat({ min: -90, max: 90 })
@@ -17,10 +18,10 @@ const jobValidation = [
     .optional({ values: 'falsy' })
     .isFloat({ min: -180, max: 180 })
     .withMessage('Longitude must be between -180 and 180.'),
-  body('plannedStartDate').optional({ values: 'falsy' }).isISO8601().withMessage('Planned start date is invalid.'),
-  body('plannedFinishDate').optional({ values: 'falsy' }).isISO8601().withMessage('Planned finish date is invalid.'),
-  body('completedAt').optional({ values: 'falsy' }).isISO8601().withMessage('Completed date is invalid.'),
-  body('workDayDate.*').optional({ values: 'falsy' }).isISO8601().withMessage('Work day date is invalid.'),
+  body('plannedStartDate').optional({ values: 'falsy' }).isISO8601().withMessage('Planned start date/time is invalid.'),
+  body('plannedFinishDate').optional({ values: 'falsy' }).isISO8601().withMessage('Planned finish date/time is invalid.'),
+  body('completedAt').optional({ values: 'falsy' }).isISO8601().withMessage('Completed date/time is invalid.'),
+  body('workDayDate.*').optional({ values: 'falsy' }).isISO8601().withMessage('Work day date/time is invalid.'),
   body('workDayHours.*')
     .optional({ values: 'falsy' })
     .isFloat({ min: 0, max: 24 })
@@ -28,7 +29,7 @@ const jobValidation = [
   body('workDayLaborCost.*')
     .optional({ values: 'falsy' })
     .isFloat({ min: 0 })
-    .withMessage('Work day labor cost must be 0 or more.'),
+    .withMessage('Work day labour cost must be 0 or more.'),
   body('workDayMaterialCost.*')
     .optional({ values: 'falsy' })
     .isFloat({ min: 0 })

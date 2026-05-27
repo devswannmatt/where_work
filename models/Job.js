@@ -124,6 +124,11 @@ const jobSchema = new mongoose.Schema(
       min: 0,
       default: 0,
     },
+    contractBudget: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
     plannedStartDate: {
       type: Date,
       default: null,

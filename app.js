@@ -88,6 +88,28 @@ function getUkDateParts(dateValue) {
   };
 }
 
+function getUkDateTimeParts(dateValue) {
+  const date = new Date(dateValue);
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: map.year,
+    month: map.month,
+    day: map.day,
+    hour: map.hour,
+    minute: map.minute,
+  };
+}
+
 function firstLineAddress(address) {
   const text = String(address || '').trim();
   if (!text) {
@@ -129,7 +151,7 @@ function hasValue(value) {
 function sectionIsEmpty(sectionName, form = {}, job = null) {
   switch (sectionName) {
     case 'job-details':
-      return !hasValue(form.workBrief) && !hasValue(form.contractValue) && !hasValue(form.plannedStartDate) && !hasValue(form.plannedFinishDate);
+      return !hasValue(form.workBrief) && !hasValue(form.contractValue) && !hasValue(form.contractBudget) && !hasValue(form.plannedStartDate) && !hasValue(form.plannedFinishDate);
     case 'location':
       return !hasValue(form.address) && !hasValue(form.lat) && !hasValue(form.lng);
     case 'materials':
@@ -199,6 +221,14 @@ app.engine(
         }
         const parts = getUkDateParts(dateValue);
         return `${parts.year}-${parts.month}-${parts.day}`;
+      },
+      toDateTimeInput(dateValue) {
+        if (!dateValue) {
+          return '';
+        }
+
+        const parts = getUkDateTimeParts(dateValue);
+        return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
       },
       formatDateUK(dateValue) {
         if (!dateValue) {

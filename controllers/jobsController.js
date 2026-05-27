@@ -43,21 +43,21 @@ function normalizePhotoDatesFromBody(body = {}) {
   return normalizeArrayInput(body.photoDates).map((value) => String(value || '').trim());
 }
 
-function parsePhotoDateInput(dateText) {
+function parseDateTimeInput(dateText, fallbackToNow = false) {
   if (!dateText) {
-    return startOfDay(new Date());
+    return fallbackToNow ? new Date() : null;
   }
 
-  const [yearText, monthText, dayText] = dateText.split('-');
-  const year = Number.parseInt(yearText, 10);
-  const month = Number.parseInt(monthText, 10);
-  const day = Number.parseInt(dayText, 10);
-
-  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
-    return startOfDay(new Date());
+  const parsed = new Date(dateText);
+  if (Number.isNaN(parsed.getTime())) {
+    return fallbackToNow ? new Date() : null;
   }
 
-  return new Date(year, month - 1, day);
+  return parsed;
+}
+
+function parsePhotoDateInput(dateText) {
+  return parseDateTimeInput(dateText, true);
 }
 
 function normalizeExistingPhotosFromBody(body = {}, fallbackPhotos = []) {
@@ -97,7 +97,18 @@ function toDateKey(dateValue) {
   return day.toISOString().slice(0, 10);
 }
 
-function normalizeWorkDaysFromBody(body = {}) {
+function normalizeWorkDaysFromBody(body = {}, options = {}) {
+  const canEditCosts = options.canEditCosts !== false;
+  const existingWorkDays = Array.isArray(options.existingWorkDays) ? options.existingWorkDays : [];
+  const existingCostsById = new Map(
+    existingWorkDays
+      .filter((workDay) => workDay && workDay._id)
+      .map((workDay) => [String(workDay._id), {
+        laborCost: Number(workDay.laborCost) || 0,
+        materialCost: Number(workDay.materialCost) || 0,
+      }])
+  );
+
   const ids = normalizeArrayInput(body.workDayId);
   const dates = normalizeArrayInput(body.workDayDate);
   const hours = normalizeArrayInput(body.workDayHours);
@@ -109,13 +120,15 @@ function normalizeWorkDaysFromBody(body = {}) {
 
   for (let index = 0; index < rowCount; index += 1) {
     const id = String(ids[index] || '').trim();
-    const date = String(dates[index] || '').trim();
+    const dateText = String(dates[index] || '').trim();
+    const date = parseDateTimeInput(dateText, false);
     const hoursValue = Number.parseFloat(String(hours[index] || '').trim());
-    const laborCostValue = Number.parseFloat(String(laborCosts[index] || '').trim());
+    const labourCostValue = Number.parseFloat(String(laborCosts[index] || '').trim());
     const materialCostValue = Number.parseFloat(String(materialCosts[index] || '').trim());
     const note = String(notes[index] || '').trim();
+    const existingCosts = id ? existingCostsById.get(id) : null;
 
-    if (!date && !note && !String(hours[index] || '').trim()) {
+    if (!dateText && !note && !String(hours[index] || '').trim()) {
       continue;
     }
 
@@ -126,8 +139,12 @@ function normalizeWorkDaysFromBody(body = {}) {
     const workDay = {
       date,
       hours: Number.isFinite(hoursValue) && hoursValue >= 0 ? hoursValue : 0,
-      laborCost: Number.isFinite(laborCostValue) && laborCostValue >= 0 ? laborCostValue : 0,
-      materialCost: Number.isFinite(materialCostValue) && materialCostValue >= 0 ? materialCostValue : 0,
+      laborCost: canEditCosts
+        ? (Number.isFinite(labourCostValue) && labourCostValue >= 0 ? labourCostValue : 0)
+        : (existingCosts ? existingCosts.laborCost : 0),
+      materialCost: canEditCosts
+        ? (Number.isFinite(materialCostValue) && materialCostValue >= 0 ? materialCostValue : 0)
+        : (existingCosts ? existingCosts.materialCost : 0),
       note,
     };
 
@@ -231,6 +248,7 @@ function calculateCostSummary(job) {
   const materialCost = workDays.reduce((sum, day) => sum + (Number(day.materialCost) || 0), 0);
   const totalCost = laborCost + materialCost;
   const contractValue = Number(job.contractValue) || 0;
+  const contractBudget = Number(job.contractBudget) || 0;
   const marginAmount = contractValue - totalCost;
   const marginPercent = contractValue > 0 ? (marginAmount / contractValue) * 100 : null;
 
@@ -240,6 +258,7 @@ function calculateCostSummary(job) {
     materialCost,
     totalCost,
     contractValue,
+    contractBudget,
     marginAmount,
     marginPercent,
   };
@@ -284,7 +303,7 @@ function buildTimeline(job) {
       type: 'workday',
       date: day.date,
       title: 'Work Day',
-      detail: `${day.hours || 0}h | Labor ${day.laborCost || 0} | Material ${day.materialCost || 0}`,
+      detail: `${day.hours || 0}h | Labour ${day.laborCost || 0} | Material ${day.materialCost || 0}`,
       note: day.note || '',
     });
   }
@@ -378,6 +397,7 @@ async function renderJobForm(res, viewName, payload) {
     errors: payload.errors || [],
     successMessage: payload.successMessage || '',
     job: payload.job,
+    canEditFinancials: payload.canEditFinancials !== false,
   });
 }
 
@@ -409,10 +429,13 @@ exports.listJobs = async (_req, res, next) => {
 
 exports.newJobForm = async (req, res, next) => {
   try {
+    const canEditFinancials = !!(req.userAccessFlags && req.userAccessFlags.admin);
+
     await renderJobForm(res, 'jobs/new', {
       title: 'Add Construction Job',
       form: {
         contractValue: '',
+        contractBudget: '',
         plannedStartDate: '',
         plannedFinishDate: '',
         workDays: [
@@ -432,6 +455,7 @@ exports.newJobForm = async (req, res, next) => {
       },
       successMessage: req.query.saved === '1' ? 'Job saved.' : '',
       job: null,
+      canEditFinancials,
     });
   } catch (error) {
     next(error);
@@ -441,6 +465,8 @@ exports.newJobForm = async (req, res, next) => {
 exports.createJob = async (req, res, next) => {
   try {
     const errors = validationResult(req);
+    const canEditFinancials = !!(req.userAccessFlags && req.userAccessFlags.admin);
+    const normalizedWorkDays = normalizeWorkDaysFromBody(req.body, { canEditCosts: canEditFinancials });
 
     const form = {
       address: req.body.address || '',
@@ -449,13 +475,14 @@ exports.createJob = async (req, res, next) => {
       workBrief: req.body.workBrief || '',
       siteReport: req.body.siteReport || '',
       contractValue: req.body.contractValue || '',
+      contractBudget: req.body.contractBudget || '',
       plannedStartDate: req.body.plannedStartDate || '',
       plannedFinishDate: req.body.plannedFinishDate || '',
       completedAt: req.body.completedAt || '',
       materialsUsedInput: req.body.materialsUsedInput || '',
       materialsLeftInput: req.body.materialsLeftInput || '',
       workers: normalizeWorkers(req.body.workers),
-      workDays: workDaysToFormRows(normalizeWorkDaysFromBody(req.body)),
+      workDays: workDaysToFormRows(normalizedWorkDays),
       checklistItems: checklistToFormRows(normalizeChecklistFromBody(req.body)),
       checklistTemplateName: req.body.checklistTemplateName || '',
       signoffSignedBy: req.body.signoffSignedBy || '',
@@ -469,6 +496,7 @@ exports.createJob = async (req, res, next) => {
         form,
         errors: errors.array(),
         job: null,
+        canEditFinancials,
       });
       return;
     }
@@ -496,13 +524,14 @@ exports.createJob = async (req, res, next) => {
       },
       workBrief: form.workBrief,
       siteReport: form.siteReport,
-      contractValue: Number(form.contractValue) || 0,
-      plannedStartDate: form.plannedStartDate || null,
-      plannedFinishDate: form.plannedFinishDate || null,
-      completedAt: form.completedAt || null,
+      contractValue: canEditFinancials ? (Number(form.contractValue) || 0) : 0,
+      contractBudget: canEditFinancials ? (Number(form.contractBudget) || 0) : 0,
+      plannedStartDate: parseDateTimeInput(form.plannedStartDate, false),
+      plannedFinishDate: parseDateTimeInput(form.plannedFinishDate, false),
+      completedAt: parseDateTimeInput(form.completedAt, false),
       materialsUsed: parseMaterialLines(form.materialsUsedInput),
       materialsLeftOnSite: parseMaterialLines(form.materialsLeftInput),
-      workDays: normalizeWorkDaysFromBody(req.body),
+      workDays: normalizedWorkDays,
       checklistItems: normalizeChecklistFromBody(req.body),
       checklistTemplateName: req.body.checklistTemplateName || '',
       workers: form.workers,
@@ -513,6 +542,8 @@ exports.createJob = async (req, res, next) => {
     res.redirect('/jobs/new?saved=1');
   } catch (error) {
     await deleteUploadedFiles(req.files);
+    const canEditFinancials = !!(req.userAccessFlags && req.userAccessFlags.admin);
+    const normalizedWorkDays = normalizeWorkDaysFromBody(req.body, { canEditCosts: canEditFinancials });
     const form = {
       address: req.body.address || '',
       lat: req.body.lat || '',
@@ -520,13 +551,14 @@ exports.createJob = async (req, res, next) => {
       workBrief: req.body.workBrief || '',
       siteReport: req.body.siteReport || '',
       contractValue: req.body.contractValue || '',
+      contractBudget: req.body.contractBudget || '',
       plannedStartDate: req.body.plannedStartDate || '',
       plannedFinishDate: req.body.plannedFinishDate || '',
       completedAt: req.body.completedAt || '',
       materialsUsedInput: req.body.materialsUsedInput || '',
       materialsLeftInput: req.body.materialsLeftInput || '',
       workers: normalizeWorkers(req.body.workers),
-      workDays: workDaysToFormRows(normalizeWorkDaysFromBody(req.body)),
+      workDays: workDaysToFormRows(normalizedWorkDays),
       checklistItems: checklistToFormRows(normalizeChecklistFromBody(req.body)),
       checklistTemplateName: req.body.checklistTemplateName || '',
       signoffSignedBy: req.body.signoffSignedBy || '',
@@ -538,6 +570,7 @@ exports.createJob = async (req, res, next) => {
       form,
       errors: [{ msg: error.message || 'Unable to save job.' }],
       job: null,
+      canEditFinancials,
     });
   }
 };
@@ -570,6 +603,7 @@ exports.showJob = async (req, res, next) => {
 
 exports.editJobForm = async (req, res, next) => {
   try {
+    const canEditFinancials = !!(req.userAccessFlags && req.userAccessFlags.admin);
     const job = await Job.findById(req.params.id).populate('workers').lean();
 
     if (!job) {
@@ -589,6 +623,7 @@ exports.editJobForm = async (req, res, next) => {
       workBrief: normalizedJob.workBrief,
       siteReport: normalizedJob.siteReport || '',
       contractValue: normalizedJob.contractValue || '',
+      contractBudget: normalizedJob.contractBudget || '',
       plannedStartDate: normalizedJob.plannedStartDate || '',
       plannedFinishDate: normalizedJob.plannedFinishDate || '',
       completedAt: normalizedJob.completedAt,
@@ -607,6 +642,7 @@ exports.editJobForm = async (req, res, next) => {
       form,
       successMessage: req.query.saved === '1' ? 'Job updated.' : '',
       job: normalizedJob,
+      canEditFinancials,
     });
   } catch (error) {
     next(error);
@@ -614,14 +650,22 @@ exports.editJobForm = async (req, res, next) => {
 };
 
 exports.updateJob = async (req, res, next) => {
+  let job;
+
   try {
     const errors = validationResult(req);
-    const job = await Job.findById(req.params.id);
+    const canEditFinancials = !!(req.userAccessFlags && req.userAccessFlags.admin);
+    job = await Job.findById(req.params.id);
 
     if (!job) {
       res.status(404).render('404', { title: 'Job Not Found' });
       return;
     }
+
+    const normalizedWorkDays = normalizeWorkDaysFromBody(req.body, {
+      canEditCosts: canEditFinancials,
+      existingWorkDays: job.workDays || [],
+    });
 
     const form = {
       address: req.body.address || '',
@@ -630,13 +674,14 @@ exports.updateJob = async (req, res, next) => {
       workBrief: req.body.workBrief || '',
       siteReport: req.body.siteReport || '',
       contractValue: req.body.contractValue || '',
+      contractBudget: req.body.contractBudget || '',
       plannedStartDate: req.body.plannedStartDate || '',
       plannedFinishDate: req.body.plannedFinishDate || '',
       completedAt: req.body.completedAt || '',
       materialsUsedInput: req.body.materialsUsedInput || '',
       materialsLeftInput: req.body.materialsLeftInput || '',
       workers: normalizeWorkers(req.body.workers),
-      workDays: workDaysToFormRows(normalizeWorkDaysFromBody(req.body)),
+      workDays: workDaysToFormRows(normalizedWorkDays),
       checklistItems: checklistToFormRows(normalizeChecklistFromBody(req.body)),
       checklistTemplateName: req.body.checklistTemplateName || '',
       signoffSignedBy: req.body.signoffSignedBy || '',
@@ -654,6 +699,7 @@ exports.updateJob = async (req, res, next) => {
           ...job.toObject(),
           photos: existingPhotos,
         },
+        canEditFinancials,
       });
       return;
     }
@@ -674,13 +720,16 @@ exports.updateJob = async (req, res, next) => {
     };
     job.workBrief = form.workBrief;
     job.siteReport = form.siteReport;
-    job.contractValue = Number(form.contractValue) || 0;
-    job.plannedStartDate = form.plannedStartDate || null;
-    job.plannedFinishDate = form.plannedFinishDate || null;
-    job.completedAt = form.completedAt || null;
+    if (canEditFinancials) {
+      job.contractValue = Number(form.contractValue) || 0;
+      job.contractBudget = Number(form.contractBudget) || 0;
+    }
+    job.plannedStartDate = parseDateTimeInput(form.plannedStartDate, false);
+    job.plannedFinishDate = parseDateTimeInput(form.plannedFinishDate, false);
+    job.completedAt = parseDateTimeInput(form.completedAt, false);
     job.materialsUsed = parseMaterialLines(form.materialsUsedInput);
     job.materialsLeftOnSite = parseMaterialLines(form.materialsLeftInput);
-    job.workDays = normalizeWorkDaysFromBody(req.body);
+    job.workDays = normalizedWorkDays;
     job.checklistItems = normalizeChecklistFromBody(req.body);
     job.checklistTemplateName = req.body.checklistTemplateName || '';
     job.workers = form.workers;
@@ -708,6 +757,12 @@ exports.updateJob = async (req, res, next) => {
   } catch (error) {
     await deleteUploadedFiles(req.files);
 
+    const canEditFinancials = !!(req.userAccessFlags && req.userAccessFlags.admin);
+    const normalizedWorkDays = normalizeWorkDaysFromBody(req.body, {
+      canEditCosts: canEditFinancials,
+      existingWorkDays: job && job.workDays ? job.workDays : [],
+    });
+
     const existingPhotos = job ? normalizeExistingPhotosFromBody(req.body, job.photos || []) : [];
     const form = {
       address: req.body.address || '',
@@ -716,13 +771,14 @@ exports.updateJob = async (req, res, next) => {
       workBrief: req.body.workBrief || '',
       siteReport: req.body.siteReport || '',
       contractValue: req.body.contractValue || '',
+      contractBudget: req.body.contractBudget || '',
       plannedStartDate: req.body.plannedStartDate || '',
       plannedFinishDate: req.body.plannedFinishDate || '',
       completedAt: req.body.completedAt || '',
       materialsUsedInput: req.body.materialsUsedInput || '',
       materialsLeftInput: req.body.materialsLeftInput || '',
       workers: normalizeWorkers(req.body.workers),
-      workDays: workDaysToFormRows(normalizeWorkDaysFromBody(req.body)),
+      workDays: workDaysToFormRows(normalizedWorkDays),
       checklistItems: checklistToFormRows(normalizeChecklistFromBody(req.body)),
       checklistTemplateName: req.body.checklistTemplateName || '',
       signoffSignedBy: req.body.signoffSignedBy || '',
@@ -739,6 +795,7 @@ exports.updateJob = async (req, res, next) => {
             photos: existingPhotos,
           }
         : null,
+      canEditFinancials,
     });
   }
 };

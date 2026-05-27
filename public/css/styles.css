@@ -827,13 +827,15 @@ select {
 }
 
 .jobs-page-wide {
-  width: min(1380px, 98vw);
-  margin-left: calc(50% - 49vw);
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
 }
 
 .job-list-card h2 {
   margin-top: 0;
   margin-bottom: 12px;
+  overflow-wrap: anywhere;
 }
 
 .job-meta-grid {
@@ -845,6 +847,7 @@ select {
 
 .job-meta-grid p {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .photo-grid {
