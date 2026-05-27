@@ -1,9 +1,19 @@
 const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
+
+const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, '..', 'public', 'uploads'));
+    fs.mkdir(uploadsDir, { recursive: true }, (error) => {
+      if (error) {
+        cb(error);
+        return;
+      }
+
+      cb(null, uploadsDir);
+    });
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
